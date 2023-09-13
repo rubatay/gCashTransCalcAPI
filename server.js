@@ -140,8 +140,10 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
     // Save the new XLSX file
     await newXlsx.toFileAsync(`uploads/${fileName}`);
 
+    const apiUrl = process.env.APP_API_URL 
+
     // Send the file download link to the client
-    res.json({ downloadLink: `http://localhost:5000/uploads/${fileName}` });
+    res.json({ downloadLink: `${apiUrl}/uploads/${fileName}` });
 
     // Delete the file from the uploads folder after a delay
     setTimeout(() => {
