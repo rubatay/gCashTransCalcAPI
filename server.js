@@ -14,6 +14,9 @@ const upload = multer({ storage });
 
 const cors = require('cors'); // Import cors
 
+// Import the ping route module
+const pingRoute = require('./modules/ping');
+
 // Enable CORS for all routes
 app.use(cors());
 
@@ -159,6 +162,11 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
     res.status(500).json({ error: 'Error' });
   }
 });
+
+
+// Use the ping route module as middleware
+app.use('/', pingRoute);
+
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
