@@ -1,3 +1,4 @@
+const dotenv = require('dotenv').config();
 const express = require('express');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -103,8 +104,12 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
           } else {
             row.Fee = 0;
           }
+        } else {
+          row['Transaction Type'] = 'UNDEFINED';
+          row.Fee = 0;
         }
       } else {
+        row['Transaction Type'] = 'EXCLUDED';
         row.Fee = 0;
       }
     });
@@ -140,7 +145,7 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
     // Save the new XLSX file
     await newXlsx.toFileAsync(`uploads/${fileName}`);
 
-    const apiUrl = process.env.APP_API_URL 
+    const apiUrl = process.env.APP_API_URL
 
     // Send the file download link to the client
     res.json({ downloadLink: `${apiUrl}/uploads/${fileName}` });
