@@ -50,20 +50,23 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
     data.forEach((row) => {
       const debit = parseFloat(row.Debit) || 0;
       const credit = parseFloat(row.Credit) || 0;
+      let amountCheck = 0;
       let isExclude = false;
       let multiplier = 0;
       let transType = '';
       let transTypeDesc = '';
+      let isFeeIncluded = false;
       let rateFound = false;
+      let rateAmountFrom = 0
+      let rateAmountTo = 0
       let rateFee = 0; 
-      let currentRateFee = 0; 
-      let prevRateFee = 0; 
+      let rateFoundFee = 0
     
+      amountCheck = debit + credit;
       isExclude = false;
+      isFeeIncluded = false;
       multiplier = 0;
       rateFee = 0; 
-      currentRateFee = 0; 
-      prevRateFee = 0; 
 
       row['Transaction Type'] = '';
       row.Fee = 0;
@@ -82,28 +85,40 @@ app.post('/upload', upload.single('xlsxFile'), async (req, res) => {
             transType = lookup.TRANSACTION_TYPE_ID;
             transTypeDesc = lookup.TRANSACTION_TYPE_DESC;
             multiplier = lookup.MULTIPLIER;
+            isFeeIncluded = lookup.FEE_INCLUDED;
             break;
           }
         }
 
         if (transType !== '') {
           row['Transaction Type'] = transTypeDesc;
-    
+
           rateFound = false;
-          for (const rate of ratesData) {
+          for (const rate of ratesData) { 
+            rateAmountFrom = rate.AMOUNT_FROM;
+            rateAmountTo = rate.AMOUNT_TO;
+            rateFee = rate.FEE;
+            
             if (transType === rate.TRANSACTION_TYPE_ID) {
-              currentRateFee = rate.FEE;
-              if (debit + credit < rate.AMOUNT) {
-                rateFound = true;
-                rateFee = prevRateFee;
-                break;
+              if (isFeeIncluded) {
+                
+                if ((parseInt(amountCheck) <= parseInt(rateAmountTo) + parseInt(rateFee)) || (parseInt(amountCheck) >= parseInt(rateAmountFrom) && parseInt(amountCheck) <= parseInt(rateAmountTo))) {
+                  rateFound = true;
+                  rateFoundFee = rateFee;
+                  break;
+                }
+              } else {
+                if (parseInt(amountCheck) >= parseInt(rateAmountFrom) && parseInt(amountCheck) <= parseInt(rateAmountTo)){
+                  rateFound = true;
+                  rateFoundFee = rateFee;
+                  break;
+                }
               }
-              prevRateFee = currentRateFee;
             }
           }
     
           if (rateFound === true) {
-            row.Fee = rateFee * multiplier;
+            row.Fee = rateFoundFee * multiplier;
           } else {
             row.Fee = 0;
           }
